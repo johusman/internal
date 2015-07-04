@@ -32,3 +32,5 @@ def get_random_datetime(from_date, to_date):
 def get_short_unique_string():
     return str(uuid.uuid4())[:8]
 
+def get_random_item(my_list):
+    return my_list[int(random.random()*len(my_list))]

@@ -44,11 +44,11 @@ def make_address(force_extra, force_apartment_number):
     with open("streetnames.txt") as f:
         streetnames = f.readlines()
 
-    streetname = streetnames[int(random.random() * len(streetnames))].strip()
+    streetname = common.get_random_item(streetnames).strip()
     streetnumber = int(random.random() * 100) + 1
 
     if force_extra or random.random() < 0.1:
-        extra = extras[int(random.random()*len(extras))]
+        extra = common.get_random_item(extras)
     else:
         extra = ""
 
@@ -63,7 +63,7 @@ def make_address2(force, firstnames, lastnames):
     extras = ["c/o", "att:"]
 
     if force or random.random() < 0.05:
-        return "%s %s %s" % (extras[int(random.random()*len(extras))], firstnames[int(random.random()*len(firstnames))].strip(), lastnames[int(random.random()*len(lastnames))].strip())
+        return "%s %s %s" % (common.get_random_item(extras), common.get_random_item(firstnames).strip(), common.get_random_item(lastnames).strip())
     else:
         return None
 
@@ -111,15 +111,15 @@ def generate(db, count):
         member.updated = common.get_random_datetime(member.created, datetime.datetime.now())
         member.email = common.get_short_unique_string() + '@test.makerspace.se'
         if is_female:
-            member.firstname = firstnames_female[int(random.random()*len(firstnames_female))].strip()
+            member.firstname = common.get_random_item(firstnames_female).strip()
         else:
-            member.firstname = firstnames_male[int(random.random()*len(firstnames_male))].strip()
-        member.lastname = lastnames[int(random.random()*len(lastnames))].strip()
+            member.firstname = common.get_random_item(firstnames_male).strip()
+        member.lastname = common.get_random_item(lastnames).strip()
         member.civicregno = make_civic_regno(is_female, i == samordning_index or random.random() < samordning_frequency)
         member.country = 'SE'
         member.phone = make_phone_number()
         member.address = make_address(i == extra_address_letter_index, i == apartment_number_index)
-        member.city = cities[int(random.random()*len(cities))].strip()
+        member.city = common.get_random_item(cities).strip()
         # Apparently the connection between city and zip code is intellectual property in Sweden
         member.zipcode = "%03d%02d" % (int(random.random()*900)+100, int(random.random()*100))
         member.address2 = make_address2(i == address_extra_info, firstnames_female, lastnames)
