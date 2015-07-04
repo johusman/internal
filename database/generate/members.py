@@ -77,6 +77,8 @@ def generate(db, count):
         firstnames_male = f.readlines()
     with open("lastnames.txt") as f:
         lastnames = f.readlines()
+    with open("cities.txt") as f:
+        cities = f.readlines()
 
     # At least one member per call should use a "samordningsnummer", and also about one in a hundred randomly
     # http://www.skatteverket.se/privat/sjalvservice/blanketterbroschyrer/broschyrer/info/707.4.39f16f103821c58f680007997.html
@@ -95,7 +97,7 @@ def generate(db, count):
 
         member = Member()
         member.created = common.get_random_datetime(datetime.datetime(2013,1,1), datetime.datetime.now())
-        member.updated = common.get_random_datetime(datetime.datetime(2013,1,1), datetime.datetime.now())
+        member.updated = common.get_random_datetime(member.created, datetime.datetime.now())
         member.email = common.get_short_unique_string() + '@test.makerspace.se'
         if is_female:
             member.firstname = firstnames_female[int(random.random()*len(firstnames_female))].strip()
@@ -106,6 +108,10 @@ def generate(db, count):
         member.country = 'SE'
         member.phone = make_phone_number()
         member.address = make_address(i == extra_address_letter_index, i == apartment_number_index)
+        member.city = cities[int(random.random()*len(cities))].strip()
+        # Apparently the connection between city and zip code is intellectual property in Sweden
+        member.zipcode = "%03d%02d" % (int(random.random()*900)+100, int(random.random()*100))
+
         try:
             generated_ids.append(common.insert_into_table(db, 'members', member))
         except:
