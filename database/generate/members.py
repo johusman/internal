@@ -38,6 +38,27 @@ def make_phone_number():
 
     return number
 
+def make_address(force_extra, force_apartment_number):
+    extras = ['A', 'B']
+
+    with open("streetnames.txt") as f:
+        streetnames = f.readlines()
+
+    streetname = streetnames[int(random.random() * len(streetnames))].strip()
+    streetnumber = int(random.random() * 100) + 1
+
+    if force_extra or random.random() < 0.1:
+        extra = extras[int(random.random()*len(extras))]
+    else:
+        extra = ""
+
+    if force_apartment_number or random.random() < 0.1:
+        apartment_number = " Lgh %02d%02d" % (random.random()*10+8, random.random()*10)
+    else:
+        apartment_number = ""
+
+    return "%s %s%s%s" % (streetname, streetnumber, extra, apartment_number)
+
 class Member:
     created = None
     updated = None
@@ -62,6 +83,12 @@ def generate(db, count):
     samordning_index = int(random.random() * count)
     samordning_frequency = 0.01
 
+    # At least one member per call should use extra letter after street number
+    extra_address_letter_index = int(random.random() * count)
+
+    # At least one member per call should use apartment number information in address
+    apartment_number_index = int(random.random() * count)
+
     generated_ids = []
     for i in range(1, count+1):
         is_female = random.random() < 0.5
@@ -78,6 +105,7 @@ def generate(db, count):
         member.civicregno = make_civic_regno(is_female, i == samordning_index or random.random() < samordning_frequency)
         member.country = 'SE'
         member.phone = make_phone_number()
+        member.address = make_address(i == extra_address_letter_index, i == apartment_number_index)
         try:
             generated_ids.append(common.insert_into_table(db, 'members', member))
         except:
