@@ -59,6 +59,14 @@ def make_address(force_extra, force_apartment_number):
 
     return "%s %s%s%s" % (streetname, streetnumber, extra, apartment_number)
 
+def make_address2(force, firstnames, lastnames):
+    extras = ["c/o", "att:"]
+
+    if force or random.random() < 0.05:
+        return "%s %s %s" % (extras[int(random.random()*len(extras))], firstnames[int(random.random()*len(firstnames))].strip(), lastnames[int(random.random()*len(lastnames))].strip())
+    else:
+        return None
+
 class Member:
     created = None
     updated = None
@@ -91,6 +99,9 @@ def generate(db, count):
     # At least one member per call should use apartment number information in address
     apartment_number_index = int(random.random() * count)
 
+    # At least one member per call should use extra info such as c/o or att: in address
+    address_extra_info = int(random.random() * count)
+
     generated_ids = []
     for i in range(1, count+1):
         is_female = random.random() < 0.5
@@ -111,6 +122,7 @@ def generate(db, count):
         member.city = cities[int(random.random()*len(cities))].strip()
         # Apparently the connection between city and zip code is intellectual property in Sweden
         member.zipcode = "%03d%02d" % (int(random.random()*900)+100, int(random.random()*100))
+        member.address2 = make_address2(i == address_extra_info, firstnames_female, lastnames)
 
         try:
             generated_ids.append(common.insert_into_table(db, 'members', member))
