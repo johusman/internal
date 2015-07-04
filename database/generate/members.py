@@ -79,6 +79,8 @@ class Member:
     phone = None
 
 def generate(db, count):
+    print "Populating table: members"
+
     with open("firstnames_female.txt") as f:
         firstnames_female = f.readlines()
     with open("firstnames_male.txt") as f:
@@ -127,7 +129,7 @@ def generate(db, count):
         try:
             generated_ids.append(common.insert_into_table(db, 'members', member))
         except:
-            print "Failed to insert members"
+            print "Failed to populate members table"
             raise
 
     return generated_ids

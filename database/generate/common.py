@@ -19,7 +19,6 @@ def insert_into_table(db, table_name, obj):
             values.append(value)
 
     query = "INSERT INTO %s (%s) VALUES (%s)" % (table_name, ', '.join(fields), ', '.join(placeholders))
-    print values
     cursor.execute(query, tuple(values))
     return cursor.lastrowid
 
