@@ -53,7 +53,7 @@ def make_address(force_extra, force_apartment_number):
         extra = ""
 
     if force_apartment_number or random.random() < 0.1:
-        apartment_number = " Lgh %02d%02d" % (random.random()*10+8, random.random()*10)
+        apartment_number = " Lgh %02d%02d" % (random.random()*10+8, random.random()*10+1)
     else:
         apartment_number = ""
 
