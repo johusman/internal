@@ -47,11 +47,11 @@ def make_address(force_extra, force_apartment_number):
     with open("streetnames.txt") as f:
         streetnames = f.readlines()
 
-    streetname = common.get_random_item(streetnames).strip()
+    streetname = random.choice(streetnames).strip()
     streetnumber = int(random.random() * 100) + 1
 
     if force_extra or common.chance(0.1):
-        extra = common.get_random_item(extras)
+        extra = random.choice(extras)
     else:
         extra = ""
 
@@ -66,7 +66,7 @@ def make_address2(force, firstnames, lastnames):
     extras = ["c/o", "att:"]
 
     if force or common.chance(0.05):
-        return "%s %s %s" % (common.get_random_item(extras), common.get_random_item(firstnames).strip(), common.get_random_item(lastnames).strip())
+        return "%s %s %s" % (random.choice(extras), random.choice(firstnames).strip(), random.choice(lastnames).strip())
     else:
         return None
 
@@ -81,7 +81,7 @@ class Member:
     country = None
     phone = None
 
-def generate(db, count):
+def generate(db, report, count):
     print "Populating table: members"
 
     with open("firstnames_female.txt") as f:
@@ -95,45 +95,59 @@ def generate(db, count):
 
     # At least one member per call should use a "samordningsnummer"
     # http://www.skatteverket.se/privat/sjalvservice/blanketterbroschyrer/broschyrer/info/707.4.39f16f103821c58f680007997.html
-    samordning_index = int(random.random() * count)
+    samordning_index = random.randint(0, count-1)
 
     # At least one member per call should use extra letter after street number
-    extra_address_letter_index = int(random.random() * count)
+    extra_address_letter_index = random.randint(0, count-1)
 
     # At least one member per call should use apartment number information in address
-    apartment_number_index = int(random.random() * count)
+    apartment_number_index = random.randint(0, count-1)
 
     # At least one member per call should use extra info such as c/o or att: in address
-    address_extra_info_index = int(random.random() * count)
+    address_extra_info_index = random.randint(0, count-1)
 
     members = {}
     for i in xrange(count):
         is_female = common.chance(0.5)
+
+        force_samordningsnummer = (i == samordning_index)
+        force_extra_address_letter = (i == extra_address_letter_index)
+        force_apartment_number = (i == apartment_number_index)
+        force_extra_address_info = (i == address_extra_info_index)
 
         member = Member()
         member.created_at = common.get_random_datetime(datetime.datetime(2013,1,1), datetime.datetime.now())
         member.updated_at = common.get_random_datetime(member.created_at, datetime.datetime.now())
         member.email = common.get_short_unique_string() + '@test.makerspace.se'
         if is_female:
-            member.firstname = common.get_random_item(firstnames_female).strip()
+            member.firstname = random.choice(firstnames_female).strip()
         else:
-            member.firstname = common.get_random_item(firstnames_male).strip()
-        member.lastname = common.get_random_item(lastnames).strip()
-        member.civicregno = make_civic_regno(db, is_female, i == samordning_index or common.chance(0.01))
+            member.firstname = random.choice(firstnames_male).strip()
+        member.lastname = random.choice(lastnames).strip()
+        member.civicregno = make_civic_regno(db, is_female, force_samordningsnummer or common.chance(0.01))
         member.country = 'SE'
         member.phone = make_phone_number()
-        member.address = make_address(i == extra_address_letter_index, i == apartment_number_index)
-        member.city = common.get_random_item(cities).strip()
+        member.address = make_address(force_extra_address_letter, force_apartment_number)
+        member.city = random.choice(cities).strip()
         # Apparently the connection between city and zip code is intellectual property in Sweden
         member.zipcode = "%03d%02d" % (int(random.random()*900)+100, int(random.random()*100))
-        member.address2 = make_address2(i == address_extra_info_index, firstnames_female, lastnames)
+        member.address2 = make_address2(force_extra_address_info, firstnames_female, lastnames)
 
         try:
             member_id = common.insert_into_table(db, 'members', member)
-            members[member_id] = member
         except:
-            print "Failed to populate members table"
+            print "FAILED to insert members row"
             raise
+
+        members[member_id] = member
+        if force_samordningsnummer:
+            report.append(("Samordningsnummer", member))
+        if force_extra_address_letter:
+            report.append(("Letter on street number", member))
+        if force_apartment_number:
+            report.append(("Address includes apartment number", member))
+        if force_extra_address_info:
+            report.append(("Extra address line", member))
 
     return members
 

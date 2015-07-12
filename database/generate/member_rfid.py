@@ -19,43 +19,65 @@ class MemberRFID:
     tagid = None
     description = None
 
-def generate(db, members):
+def generate(db, report, members):
     print "Populating table: member_rfid"
 
     descriptions = ["Work tag", "Surgically implanted in hand", "Cell phone chip", "Sewn into wallet", "Of unknown extra-terrestrial origin"]
 
     # At least one member per call should have an inactive tag
-    inactive_tag_index = int(random.random() * len(members))
+    inactive_tag_index = random.randint(0, len(members)-1)
 
-    # At least one member per call should have three rfid keys
-    three_key_index = int(random.random() * len(members)) 
+    # At least one member per call should have three rfid tags
+    three_tag_index = random.randint(0, len(members)-1)
+
+    # At least one member per call should lack tags completely
+    no_tag_index = common.random_index_with_exclude(len(members), [inactive_tag_index, three_tag_index]) 
 
     # At least one member per call should have a full length rfid
-    full_rfid_index = int(random.random() * len(members))
+    full_rfid_index = common.random_index_with_exclude(len(members), [no_tag_index])
 
     i = 0
     for member_id in members:
         member = members[member_id]
-        if i == three_key_index:
+
+        force_three_tags = (i == three_tag_index)
+        force_no_tag = (i == no_tag_index)
+        force_full_rfid = (i == full_rfid_index)
+        force_inactive_tag = (i == inactive_tag_index)
+
+        if force_three_tags:
             number_of_ids = 3
-        elif i == full_rfid_index:
+        elif force_full_rfid:
             number_of_ids = 2
+        elif force_no_tag or common.chance(0.1) and not force_inactive_tag:
+            number_of_ids = 0
         else:
             number_of_ids = int(1 + 3*random.random()**5) # about 20% with two keys, 8% with three keys
 
-        for j in range(number_of_ids):
-            has_description = j > 0 or common.chance(0.1)
-            if i == full_rfid_index and j == 1 or common.chance(0.02):
-                rfid = make_unique_rfid(db, 16)
-            else:
-                rfid = make_unique_rfid(db, 8)
+        if number_of_ids > 0:
+            for j in range(number_of_ids):
+                has_description = j > 0 or common.chance(0.1)
+                if force_full_rfid and j == 1 or common.chance(0.02):
+                    rfid = make_unique_rfid(db, 16)
+                else:
+                    rfid = make_unique_rfid(db, 8)
 
-            tag = MemberRFID()
-            tag.created_at = common.get_random_datetime(member.created_at, datetime.datetime.now())
-            tag.updated_at = common.get_random_datetime(tag.created_at, datetime.datetime.now())
-            tag.member_id = member_id
-            tag.active = common.chance(0.9) and i != inactive_tag_index
-            tag.tagid = rfid
-            tag.description = None if not has_description else common.get_random_item(descriptions)
-            common.insert_into_table(db, 'member_rfid', tag)
+                tag = MemberRFID()
+                tag.created_at = common.get_random_datetime(member.created_at, datetime.datetime.now())
+                tag.updated_at = common.get_random_datetime(tag.created_at, datetime.datetime.now())
+                tag.member_id = member_id
+                tag.active = common.chance(0.9) and not force_inactive_tag
+                tag.tagid = rfid
+                tag.description = None if not has_description else random.choice(descriptions)
+                common.insert_into_table(db, 'member_rfid', tag)
+
+        if force_three_tags:
+            report.append(("Three RFID keys", member))
+        if force_no_tag:
+            report.append(("No RFID key", member))
+        if force_full_rfid :
+            report.append(("Full RFID", member))
+        if force_inactive_tag :
+            report.append(("Inactive RFID tag", member))
+
         i = i + 1

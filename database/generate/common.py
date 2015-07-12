@@ -38,9 +38,6 @@ def get_random_datetime(from_date, to_date):
 def get_short_unique_string():
     return str(uuid.uuid4())[:8]
 
-def get_random_item(my_list):
-    return my_list[int(random.random()*len(my_list))]
-
 def get_random_digit_string(length):
     number = ""
     for i in range(0, length):
@@ -49,3 +46,9 @@ def get_random_digit_string(length):
 
 def chance(chance):
     return random.random() < chance
+
+def random_index_with_exclude(maximum, excludes):
+    index = random.randint(0, maximum-1)
+    while index in excludes:
+        index = random.randint(0, maximum-1)
+    return index
